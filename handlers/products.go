@@ -18,6 +18,7 @@ package handlers
 
 import (
 	"context"
+	protos "currency/protos/currency"
 	"data"
 	"fmt"
 	"log"
@@ -48,12 +49,14 @@ type productIDParameterWrapper struct {
 }
 
 type Products struct {
-	l *log.Logger
+	l  *log.Logger
+	v  *data.Validation
+	cc protos.CurrencyClient
 }
 
-func NewProducts(l *log.Logger) *Products {
+func NewProducts(l *log.Logger, v *data.Validation, cc protos.CurrencyClient) *Products {
 	//returns product
-	return &Products{l}
+	return &Products{l, v, cc}
 }
 
 func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
@@ -83,6 +86,24 @@ func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+// getProductID returns the product ID from the URL
+// Panics if cannot convert the id into an integer
+// this should never happen as the router ensures that
+// this is a valid number
+func getProductID(r *http.Request) int {
+	// parse the product id from the url
+	vars := mux.Vars(r)
+
+	// convert the id into an integer and return
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		// should never happen
+		panic(err)
+	}
+
+	return id
 }
 
 type KeyProduct struct{}
