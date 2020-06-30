@@ -59,6 +59,16 @@ paths:
           $ref: '#/responses/noContent'
       tags:
       - products
+    get:
+      description: Return a list of products from the database
+      operationId: listSingleProduct
+      responses:
+        "200":
+          $ref: '#/responses/productResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - products
 produces:
 - application/json
 responses:

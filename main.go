@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	protos "currency/protos/currency"
 	"handlers"
 	"log"
 	"net/http"
@@ -9,14 +10,29 @@ import (
 	"os/signal"
 	"time"
 
+	"data"
+
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc"
 )
 
 func main() {
 	l := log.New(os.Stdout, "product-api ", log.LstdFlags)
-	//Product handler
-	ph := handlers.NewProducts(l)
+	v := data.NewValidation()
+
+	conn, err := grpc.Dial("localhost:9092", grpc.WithInsecure())
+	if err != nil {
+		//err here
+		panic(err)
+	}
+	defer conn.Close()
+
+	// create currency client
+	cc := protos.NewCurrencyClient(conn)
+
+	//create the handler
+	ph := handlers.NewProducts(l, v, cc)
 
 	//servermux
 	sm := mux.NewRouter()
@@ -24,6 +40,7 @@ func main() {
 	//Routes
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/products", ph.GetProducts)
+	getRouter.HandleFunc("/products/{id:[0-9]+}", ph.ListSingle)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProducts)
